@@ -125,6 +125,9 @@ def unify(ci, cj):
 
 
 def plResolve(C1, C2):  # retrun all possibility from two Clauses
+    """
+    returns all clauses that can be obtained from clauses ci and cj
+    """
     resolvents = []
     ciOriginal = C1.split(" ")
     cjOriginal = C2.split(" ")
@@ -168,19 +171,12 @@ def plResolve(C1, C2):  # retrun all possibility from two Clauses
     return resolvents
 
 
-def subsetOf(list1, list2):
-    for item in list1:
-        if item not in list2:
-            return False
-    return True
-
-
-def plResolution(Clauses_set):  # resolution function return true or false
+def plResolution(kb):  # resolution function return true or false
     # print(Clauses_set)
     newList = []
     while True:
-        allPairs = [(Clauses_set[i], Clauses_set[j]) for i in range(len(Clauses_set)) for j in
-                 range(i + 1, len(Clauses_set))]  # make pair from all possible Clauses
+        allPairs = [(kb[i], kb[j]) for i in range(len(kb)) for j in
+                    range(i + 1, len(kb))]  # make pair from all possible Clauses
         for (ci, cj) in allPairs:
             resolvents = plResolve(ci, cj)  # Call Resolver
             # print(resolvents)
@@ -189,45 +185,47 @@ def plResolution(Clauses_set):  # resolution function return true or false
             for temp in resolvents:
                 if temp not in newList:
                     newList.append(temp)
-        if subsetOf(newList, Clauses_set):  # check if the sublist we return false
+
+        if set(newList).issubset(kb):
             return False
-        for i in newList:
-            if i not in Clauses_set:
-                Clauses_set.append(i)
+
+        for clause in newList:
+            if clause not in kb:
+                kb.append(clause)
 
 
-with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/universals+constants/uc09.cnf") as f:  # read all the data from the file
-    line_cnf = f.readline()
-    while line_cnf:  # read line by line and store into the list
-        if line_cnf.find("Predicates:") != (-1):
-            line_cnf = line_cnf.replace("Predicates: ", "")
-            Predicates = line_cnf.strip().split(" ")
+with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
+    lines = f.readline()
+    while lines:  # read line by line and store into the list
+        if lines.find("Predicates:") != (-1):
+            lines = lines.replace("Predicates: ", "")
+            Predicates = lines.strip().split(" ")
             if Predicates[0] == "":
                 Predicates = []
-            line_cnf = ""
-        if line_cnf.find("Variables:") != (-1):
-            line_cnf = line_cnf.replace("Variables: ", "")
-            Variables = line_cnf.strip().split(" ")
+            lines = ""
+        if lines.find("Variables:") != (-1):
+            lines = lines.replace("Variables: ", "")
+            Variables = lines.strip().split(" ")
             if Variables[0] == "":
                 Variables = []
-            line_cnf = ""
-        if line_cnf.find("Constants:") != (-1):
-            line_cnf = line_cnf.replace("Constants: ", "")
-            Constants = line_cnf.strip().split(" ")
+            lines = ""
+        if lines.find("Constants:") != (-1):
+            lines = lines.replace("Constants: ", "")
+            Constants = lines.strip().split(" ")
             if Constants[0] == "":
                 Constants = []
-            line_cnf = ""
-        if line_cnf.find("Functions:") != (-1):
-            line_cnf = line_cnf.replace("Functions: ", "")
-            Functions = line_cnf.strip().split(" ")
+            lines = ""
+        if lines.find("Functions:") != (-1):
+            lines = lines.replace("Functions: ", "")
+            Functions = lines.strip().split(" ")
             if Functions[0] == "":
                 Functions = []
-            line_cnf = ""
-        line_cnf = line_cnf.replace("Clauses:", "")
-        line_cnf = line_cnf.strip()
-        if line_cnf != "":
-            Clauses.append(line_cnf)
-        line_cnf = f.readline()
+            lines = ""
+        lines = lines.replace("Clauses:", "")
+        lines = lines.strip()
+        if lines != "":
+            Clauses.append(lines)
+        lines = f.readline()
 
 
 if plResolution(Clauses):
