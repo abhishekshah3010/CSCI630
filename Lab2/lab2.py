@@ -15,35 +15,42 @@ def bracketsCountFor(clause):
     return brackets
 
 
-def parseDataFor(ci, cj):
+def parseVariables(ci, cj):
     ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
     cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
-    x_term_set = ciVariable.split(",")
-    y_term_set = cjVariable.split(",")
+    ciVariablesSplit = ciVariable.split(",")
+    cjVariablesSplit = cjVariable.split(",")
+    return ciVariable, cjVariable, ciVariablesSplit, cjVariablesSplit
+
+
+def parseDataForFunctions(ci, cj):
+
+    _, _, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
 
     if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
-        for i in range(len(x_term_set)):
-            if x_term_set[i] in Variables:
-                ci = ci.replace(x_term_set[i], y_term_set[i])
+        for i in range(len(ciVariableSet)):
+            if ciVariableSet[i] in Variables:
+                ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
         return ci, cj
+
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) != 4:
-        for i in range(len(y_term_set)):
-            if y_term_set[i] in Variables:
-                cj = cj.replace(y_term_set[i], x_term_set[i])
+        for i in range(len(cjVariableSet)):
+            if cjVariableSet[i] in Variables:
+                cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
         return ci, cj
 
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
-        for i in range(len(x_term_set)):
-            if x_term_set[i].find("(") != -1:
-                x_function = x_term_set[i]
-                y_function = y_term_set[i]
-                if x_function.split("(")[0] in Functions:
-                    x_var = x_function[x_function.find('(') + 1:x_function.rfind(')')]
-                    y_var = y_function[y_function.find('(') + 1:y_function.rfind(')')]
-                    if x_var in Variables:
-                        ci = ci.replace(x_var, y_var)
-                    elif y_var in Variables:
-                        cj = cj.replace(y_var, x_var)
+        for i in range(len(ciVariableSet)):
+            if ciVariableSet[i].find("(") != -1:
+                ciItemInVariable = ciVariableSet[i]
+                cjItemInVariable = cjVariableSet[i]
+                if ciItemInVariable.split("(")[0] in Functions:
+                    ciVariable = ciItemInVariable[ciItemInVariable.find('(') + 1:ciItemInVariable.rfind(')')]
+                    cjVariable = cjItemInVariable[cjItemInVariable.find('(') + 1:cjItemInVariable.rfind(')')]
+                    if ciVariable in Variables:
+                        ci = ci.replace(ciVariable, cjVariable)
+                    elif cjVariable in Variables:
+                        cj = cj.replace(cjVariable, ciVariable)
                 return ci, cj
 
     return ci, cj
@@ -52,27 +59,30 @@ def parseDataFor(ci, cj):
 def unify(ci, cj):
     if ci.find(",") != -1 and cj.find(",") != -1:
         if bracketsCountFor(ci) == 4 or bracketsCountFor(cj) == 4:
-            ci, cj = parseDataFor(ci, cj)
-        ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
-        cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
-        ciVariableSet = ciVariable.split(",")
-        cjVariableSet = cjVariable.split(",")
+            ci, cj = parseDataForFunctions(ci, cj)
+
+        ciVariable, cjVariable, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
+
         remove_spot = []
-        for i in range(0, len(ciVariableSet)):
+        for i in range(len(ciVariableSet)):
             if ciVariableSet[i] in Variables:
                 ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
                 remove_spot.append(cjVariableSet[i])
+
         for i in remove_spot:
             cjVariableSet.remove(i)
-        for i in range(0, len(cjVariableSet)):
+
+        for i in range(len(cjVariableSet)):
             if cjVariableSet[i] in Variables:
                 cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
         return ci, cj
 
     elif ci.find(",") != -1:
         return ci, cj
+
     elif cj.find(",") != -1:
         return ci, cj
+
     else:
         ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
         cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
@@ -86,8 +96,10 @@ def unify(ci, cj):
 
         else:
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
+
                 x_function = ci[ci.find('(') + 1:ci.rfind(')')]
                 y_function = cj[cj.find('(') + 1:cj.rfind(')')]
+
                 if x_function.split("(")[0] in Functions:
                     ciVariable = x_function[x_function.find('(') + 1:x_function.rfind(')')]
                     cjVariable = y_function[y_function.find('(') + 1:y_function.rfind(')')]
@@ -122,52 +134,51 @@ def negationOf(a):
     return a
 
 
-def plResolve(C1, C2):  # return all possibility from two Clauses
+def plResolve(ci, cj):  # return all possibility from two Clauses
     """
     returns all clauses that can be obtained from clauses ci and cj
     """
-    resolvents = []
-    ciOriginal = C1.split(" ")
-    cjOriginal = C2.split(" ")
+    clauses = []
+    ciOriginal = ci.split(" ")
+    cjOriginal = cj.split(" ")
     for i in ciOriginal:
         for j in cjOriginal:
             iUnified, jUnified = unify(i, j)  # Unify two to see if it can be same
             if iUnified == negationOf(jUnified) or negationOf(iUnified) == jUnified:  #
-                ciTemp = C1.split(" ")
+                ciTemp = ci.split(" ")
                 ciTemp.remove(i)
-                cjTemp = C2.split(" ")
+                cjTemp = cj.split(" ")
                 cjTemp.remove(j)
 
-                itmp = ""
-                jtmp = ""
+                ciNew = ""
+                cjNew = ""
 
-                char_space = ""
-                if len(ciTemp) >= 2:
-                    char_space = " "
-                for i in ciTemp:
-                    if itmp != "":
-                        itmp = itmp + char_space + i
+                spaceBetweenClauses = ""
+                if len(ciTemp) > 1:
+                    spaceBetweenClauses = " "
+                for item in ciTemp:
+                    if ciNew != "":
+                        ciNew = ciNew + spaceBetweenClauses + item
                     else:
-                        itmp = itmp + i
+                        ciNew = ciNew + item
 
-                char_space = ""
-                if len(cjTemp) >= 2:
-                    char_space = " "
-                for j in cjTemp:
-                    if jtmp != "":
-                        jtmp = jtmp + char_space + j
+                spaceBetweenClauses = ""
+                if len(cjTemp) > 1:
+                    spaceBetweenClauses = " "
+                for item in cjTemp:
+                    if cjNew != "":
+                        cjNew = cjNew + spaceBetweenClauses + item
                     else:
-                        jtmp = jtmp + j
+                        cjNew = cjNew + item
 
-                if itmp == "" and jtmp == "":
-                    resolvents.append([])
+                if ciNew == "" and cjNew == "":
+                    clauses.append([])
                 else:
-                    if jtmp == "" or itmp == "":
-                        resolvents.append(itmp + jtmp)
+                    if cjNew == "" or ciNew == "":
+                        clauses.append(ciNew + cjNew)
                     else:
-                        resolvents.append(itmp + " " + jtmp)
-
-    return resolvents
+                        clauses.append(ciNew + " " + cjNew)
+    return clauses
 
 
 def plResolution(kb):  # resolution function return true or false
@@ -193,39 +204,43 @@ def plResolution(kb):  # resolution function return true or false
                 kb.append(clause)
 
 
-with open(
-        "/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
-    lines = f.readline()
-    while lines:  # read line by line and store into the list
-        if lines.find("Predicates:") != (-1):
-            lines = lines.replace("Predicates: ", "")
-            Predicates = lines.strip().split(" ")
-            if Predicates[0] == "":
-                Predicates = []
-            lines = ""
-        if lines.find("Variables:") != (-1):
-            lines = lines.replace("Variables: ", "")
-            Variables = lines.strip().split(" ")
-            if Variables[0] == "":
-                Variables = []
-            lines = ""
-        if lines.find("Constants:") != (-1):
-            lines = lines.replace("Constants: ", "")
-            Constants = lines.strip().split(" ")
-            if Constants[0] == "":
-                Constants = []
-            lines = ""
-        if lines.find("Functions:") != (-1):
-            lines = lines.replace("Functions: ", "")
-            Functions = lines.strip().split(" ")
-            if Functions[0] == "":
-                Functions = []
-            lines = ""
-        lines = lines.replace("Clauses:", "")
-        lines = lines.strip()
-        if lines != "":
-            Clauses.append(lines)
+if len(sys.argv) < 1:
+    print("Invalid number of arguments!")
+    sys.exit(1)
+else:
+    with open(
+            "/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
         lines = f.readline()
+        while lines:  # read line by line and store into the list
+            if lines.find("Predicates:") != (-1):
+                lines = lines.replace("Predicates: ", "")
+                Predicates = lines.strip().split(" ")
+                if Predicates[0] == "":
+                    Predicates = []
+                lines = ""
+            if lines.find("Variables:") != (-1):
+                lines = lines.replace("Variables: ", "")
+                Variables = lines.strip().split(" ")
+                if Variables[0] == "":
+                    Variables = []
+                lines = ""
+            if lines.find("Constants:") != (-1):
+                lines = lines.replace("Constants: ", "")
+                Constants = lines.strip().split(" ")
+                if Constants[0] == "":
+                    Constants = []
+                lines = ""
+            if lines.find("Functions:") != (-1):
+                lines = lines.replace("Functions: ", "")
+                Functions = lines.strip().split(" ")
+                if Functions[0] == "":
+                    Functions = []
+                lines = ""
+            lines = lines.replace("Clauses:", "")
+            lines = lines.strip()
+            if lines != "":
+                Clauses.append(lines)
+            lines = f.readline()
 
 if plResolution(Clauses):
     print("no")
