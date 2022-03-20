@@ -137,12 +137,44 @@ def unify(ci, cj):
 #         clause = "!" + clause[0:]
 #     return clause
 
+def clausesAfterResolution(ci, cj):
+    clauses = []
+
+    ciNew = ""
+    spaceBetweenClauses = ""
+    if len(ci) > 1:
+        spaceBetweenClauses = " "
+    for item in ci:
+        if ciNew != "":
+            ciNew = ciNew + spaceBetweenClauses + item
+        else:
+            ciNew = ciNew + item
+
+    cjNew = ""
+    spaceBetweenClauses = ""
+    if len(cj) > 1:
+        spaceBetweenClauses = " "
+    for item in cj:
+        if cjNew != "":
+            cjNew = cjNew + spaceBetweenClauses + item
+        else:
+            cjNew = cjNew + item
+
+    if ciNew == "" and cjNew == "":
+        clauses.append([])
+    else:
+        if cjNew == "" or ciNew == "":
+            clauses.append(ciNew + cjNew)
+        else:
+            clauses.append(ciNew + " " + cjNew)
+    return clauses
+
 
 def plResolve(ci, cj):  # return all possibility from two Clauses
     """
     returns all clauses that can be obtained from clauses ci and cj
     """
-    clauses = []
+    resolvents = []
     ciOriginal = ci.split(" ")
     cjOriginal = cj.split(" ")
     for i in ciOriginal:
@@ -153,36 +185,8 @@ def plResolve(ci, cj):  # return all possibility from two Clauses
                 ciTemp.remove(i)
                 cjTemp = cj.split(" ")
                 cjTemp.remove(j)
-
-                ciNew = ""
-                cjNew = ""
-
-                spaceBetweenClauses = ""
-                if len(ciTemp) > 1:
-                    spaceBetweenClauses = " "
-                for item in ciTemp:
-                    if ciNew != "":
-                        ciNew = ciNew + spaceBetweenClauses + item
-                    else:
-                        ciNew = ciNew + item
-
-                spaceBetweenClauses = ""
-                if len(cjTemp) > 1:
-                    spaceBetweenClauses = " "
-                for item in cjTemp:
-                    if cjNew != "":
-                        cjNew = cjNew + spaceBetweenClauses + item
-                    else:
-                        cjNew = cjNew + item
-
-                if ciNew == "" and cjNew == "":
-                    clauses.append([])
-                else:
-                    if cjNew == "" or ciNew == "":
-                        clauses.append(ciNew + cjNew)
-                    else:
-                        clauses.append(ciNew + " " + cjNew)
-    return clauses
+                resolvents = clausesAfterResolution(ciTemp, cjTemp)
+    return resolvents
 
 
 def plResolution(kb):  # resolution function return true or false
