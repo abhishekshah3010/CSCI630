@@ -126,12 +126,12 @@ def unify(ci, cj):
                 return ci, cj
 
 
-def negationOf(a):
-    if a.find("!") != -1:
-        a = a.replace("!", "")
+def negationOf(clause):
+    if clause.find("!") != -1:
+        clause = clause.replace("!", "")
     else:
-        a = "!" + a[0:]
-    return a
+        clause = "!" + clause[0:]
+    return clause
 
 
 def plResolve(ci, cj):  # return all possibility from two Clauses
@@ -204,43 +204,21 @@ def plResolution(kb):  # resolution function return true or false
                 kb.append(clause)
 
 
+
+
+
 if len(sys.argv) < 1:
     print("Invalid number of arguments!")
     sys.exit(1)
 else:
-    with open(
-            "/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
-        lines = f.readline()
-        while lines:  # read line by line and store into the list
-            if lines.find("Predicates:") != (-1):
-                lines = lines.replace("Predicates: ", "")
-                Predicates = lines.strip().split(" ")
-                if Predicates[0] == "":
-                    Predicates = []
-                lines = ""
-            if lines.find("Variables:") != (-1):
-                lines = lines.replace("Variables: ", "")
-                Variables = lines.strip().split(" ")
-                if Variables[0] == "":
-                    Variables = []
-                lines = ""
-            if lines.find("Constants:") != (-1):
-                lines = lines.replace("Constants: ", "")
-                Constants = lines.strip().split(" ")
-                if Constants[0] == "":
-                    Constants = []
-                lines = ""
-            if lines.find("Functions:") != (-1):
-                lines = lines.replace("Functions: ", "")
-                Functions = lines.strip().split(" ")
-                if Functions[0] == "":
-                    Functions = []
-                lines = ""
-            lines = lines.replace("Clauses:", "")
-            lines = lines.strip()
-            if lines != "":
-                Clauses.append(lines)
-            lines = f.readline()
+    with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:
+        lines = f.readlines()
+        Predicates = lines[0].split()[1:]
+        Variables = lines[1].split()[1:]
+        Constants = lines[2].split()[1:]
+        Functions = lines[3].split()[1:]
+        for i in range(5, len(lines)):
+            Clauses.append(lines[i].strip().rstrip('\n'))
 
 if plResolution(Clauses):
     print("no")
