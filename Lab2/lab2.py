@@ -1,6 +1,4 @@
-from os import remove, replace, truncate
 import sys
-import re
 
 Predicates = []
 Variables = []
@@ -8,20 +6,13 @@ Constants = []
 Functions = []
 Clauses = []
 
-def bracketsCountFor(x):
+
+def bracketsCountFor(clause):
     brackets = 0
-    for i in x:
-        if i == "(" or i == ")":
-            brackets += 1
+    for b in clause:
+        if b == "(" or b == ")":
+            brackets = brackets + 1
     return brackets
-
-
-def negationOf(a):
-    if a.find("!") != -1:
-        a = a.replace("!", "")
-    else:
-        a = "!" + a[0:]
-    return a
 
 
 def parseDataFor(ci, cj):
@@ -31,18 +22,18 @@ def parseDataFor(ci, cj):
     y_term_set = cjVariable.split(",")
 
     if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
-        for i in range(0, len(x_term_set)):
+        for i in range(len(x_term_set)):
             if x_term_set[i] in Variables:
                 ci = ci.replace(x_term_set[i], y_term_set[i])
         return ci, cj
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) != 4:
-        for i in range(0, len(y_term_set)):
+        for i in range(len(y_term_set)):
             if y_term_set[i] in Variables:
                 cj = cj.replace(y_term_set[i], x_term_set[i])
         return ci, cj
 
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
-        for i in range(0, len(x_term_set)):
+        for i in range(len(x_term_set)):
             if x_term_set[i].find("(") != -1:
                 x_function = x_term_set[i]
                 y_function = y_term_set[i]
@@ -53,7 +44,6 @@ def parseDataFor(ci, cj):
                         ci = ci.replace(x_var, y_var)
                     elif y_var in Variables:
                         cj = cj.replace(y_var, x_var)
-
                 return ci, cj
 
     return ci, cj
@@ -124,7 +114,15 @@ def unify(ci, cj):
                 return ci, cj
 
 
-def plResolve(C1, C2):  # retrun all possibility from two Clauses
+def negationOf(a):
+    if a.find("!") != -1:
+        a = a.replace("!", "")
+    else:
+        a = "!" + a[0:]
+    return a
+
+
+def plResolve(C1, C2):  # return all possibility from two Clauses
     """
     returns all clauses that can be obtained from clauses ci and cj
     """
@@ -139,8 +137,10 @@ def plResolve(C1, C2):  # retrun all possibility from two Clauses
                 ciTemp.remove(i)
                 cjTemp = C2.split(" ")
                 cjTemp.remove(j)
+
                 itmp = ""
                 jtmp = ""
+
                 char_space = ""
                 if len(ciTemp) >= 2:
                     char_space = " "
@@ -153,7 +153,6 @@ def plResolve(C1, C2):  # retrun all possibility from two Clauses
                 char_space = ""
                 if len(cjTemp) >= 2:
                     char_space = " "
-
                 for j in cjTemp:
                     if jtmp != "":
                         jtmp = jtmp + char_space + j
@@ -194,7 +193,8 @@ def plResolution(kb):  # resolution function return true or false
                 kb.append(clause)
 
 
-with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
+with open(
+        "/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:  # read all the data from the file
     lines = f.readline()
     while lines:  # read line by line and store into the list
         if lines.find("Predicates:") != (-1):
@@ -226,7 +226,6 @@ with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/
         if lines != "":
             Clauses.append(lines)
         lines = f.readline()
-
 
 if plResolution(Clauses):
     print("no")
