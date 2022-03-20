@@ -1,10 +1,10 @@
 import sys
 
-Predicates = []
-Variables = []
-Constants = []
-Functions = []
-Clauses = []
+predicates = []
+variables = []
+constants = []
+functions = []
+clauses = []
 
 
 def bracketsCountFor(clause):
@@ -32,13 +32,13 @@ def parseDataForFunctions(ci, cj):
 
     if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
-            if ciVariableSet[i] in Variables:
+            if ciVariableSet[i] in variables:
                 ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
         return ci, cj
 
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) != 4:
         for i in range(len(cjVariableSet)):
-            if cjVariableSet[i] in Variables:
+            if cjVariableSet[i] in variables:
                 cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
         return ci, cj
 
@@ -47,12 +47,12 @@ def parseDataForFunctions(ci, cj):
             if ciVariableSet[i].find("(") != -1:
                 ciItemInVariable = ciVariableSet[i]
                 cjItemInVariable = cjVariableSet[i]
-                if ciItemInVariable.split("(")[0] in Functions:
+                if ciItemInVariable.split("(")[0] in functions:
                     ciVariable = extractVariable(ciItemInVariable)
                     cjVariable = extractVariable(cjItemInVariable)
-                    if ciVariable in Variables:
+                    if ciVariable in variables:
                         ci = ci.replace(ciVariable, cjVariable)
-                    elif cjVariable in Variables:
+                    elif cjVariable in variables:
                         cj = cj.replace(cjVariable, ciVariable)
                 return ci, cj
 
@@ -67,17 +67,17 @@ def unify(ci, cj):
         ciVariable, cjVariable, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
 
         remove_spot = []
-        for i in range(len(ciVariableSet)):
-            if ciVariableSet[i] in Variables:
-                ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
-                remove_spot.append(cjVariableSet[i])
+        for item in range(len(ciVariableSet)):
+            if ciVariableSet[item] in variables:
+                ci = ci.replace(ciVariableSet[item], cjVariableSet[item])
+                remove_spot.append(cjVariableSet[item])
 
-        for i in remove_spot:
-            cjVariableSet.remove(i)
+        for item in remove_spot:
+            cjVariableSet.remove(item)
 
-        for i in range(len(cjVariableSet)):
-            if cjVariableSet[i] in Variables:
-                cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
+        for item in range(len(cjVariableSet)):
+            if cjVariableSet[item] in variables:
+                cj = cj.replace(cjVariableSet[item], ciVariableSet[item])
         return ci, cj
 
     elif ci.find(",") != -1:
@@ -87,13 +87,13 @@ def unify(ci, cj):
         return ci, cj
 
     else:
-        ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
-        cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
+        ciVariable = extractVariable(ci)
+        cjVariable = extractVariable(cj)
 
         if bracketsCountFor(ci) == 2 and bracketsCountFor(cj) == 2:  # only one variable or const
-            if ciVariable in Variables:
+            if ciVariable in variables:
                 ci = ci.replace(ciVariable, cjVariable)
-            elif cjVariable in Variables:
+            elif cjVariable in variables:
                 cj = cj.replace(cjVariable, ciVariable)
             return ci, cj
 
@@ -103,28 +103,28 @@ def unify(ci, cj):
                 ciVariable = extractVariable(ci)
                 cjVariable = extractVariable(cj)
 
-                if ciVariable.split("(")[0] in Functions:
+                if ciVariable.split("(")[0] in functions:
                     ciVariable = extractVariable(ciVariable)
                     cjVariable = extractVariable(cjVariable)
-                    if ciVariable in Variables:
+                    if ciVariable in variables:
                         ci = ci.replace(ciVariable, cjVariable)
-                    elif cjVariable in Variables:
+                    elif cjVariable in variables:
                         cj = cj.replace(cjVariable, ciVariable)
                 return ci, cj
 
             elif bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 2:
 
                 ciVariable = extractVariable(ci)
-                if ciVariable.split("(")[0] in Functions:
-                    cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
-                    if cjVariable in Variables:
+                if ciVariable.split("(")[0] in functions:
+                    cjVariable = extractVariable(cj)
+                    if cjVariable in variables:
                         cj = cj.replace(cjVariable, ciVariable)
                 return ci, cj
             else:
                 cjVariable = extractVariable(cj)
-                if cjVariable.split("(")[0] in Functions:
+                if cjVariable.split("(")[0] in functions:
                     ciVariable = extractVariable(ci)
-                    if ciVariable in Variables:
+                    if ciVariable in variables:
                         ci = ci.replace(ciVariable, cjVariable)
                 return ci, cj
 
@@ -209,7 +209,7 @@ def plResolution(kb):  # resolution function return true or false
 
 
 def checkData():
-    if plResolution(Clauses):
+    if plResolution(clauses):
         print("no")
     else:
         print("yes")
@@ -221,12 +221,12 @@ if len(sys.argv) < 1:
 else:
     with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:
         lines = f.readlines()
-        Predicates = lines[0].split()[1:]
-        Variables = lines[1].split()[1:]
-        Constants = lines[2].split()[1:]
-        Functions = lines[3].split()[1:]
+        predicates = lines[0].split()[1:]
+        variables = lines[1].split()[1:]
+        constants = lines[2].split()[1:]
+        functions = lines[3].split()[1:]
         for i in range(5, len(lines)):
-            Clauses.append(lines[i].strip().rstrip('\n'))
+            clauses.append(lines[i].strip().rstrip('\n'))
 
 
 if __name__ == "__main__":
