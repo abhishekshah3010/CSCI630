@@ -15,17 +15,21 @@ def bracketsCountFor(clause):
     return brackets
 
 
+def extractVariable(c):
+    return c[c.find('(') + 1:c.rfind(')')]
+
+
 def parseVariables(ci, cj):
-    ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
-    cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
+    ciVariable = extractVariable(ci)
+    cjVariable = extractVariable(cj)
     ciVariablesSplit = ciVariable.split(",")
     cjVariablesSplit = cjVariable.split(",")
     return ciVariable, cjVariable, ciVariablesSplit, cjVariablesSplit
 
 
 def parseDataForFunctions(ci, cj):
-
     _, _, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
+    3
 
     if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
@@ -45,8 +49,8 @@ def parseDataForFunctions(ci, cj):
                 ciItemInVariable = ciVariableSet[i]
                 cjItemInVariable = cjVariableSet[i]
                 if ciItemInVariable.split("(")[0] in Functions:
-                    ciVariable = ciItemInVariable[ciItemInVariable.find('(') + 1:ciItemInVariable.rfind(')')]
-                    cjVariable = cjItemInVariable[cjItemInVariable.find('(') + 1:cjItemInVariable.rfind(')')]
+                    ciVariable = extractVariable(ciItemInVariable)
+                    cjVariable = extractVariable(cjItemInVariable)
                     if ciVariable in Variables:
                         ci = ci.replace(ciVariable, cjVariable)
                     elif cjVariable in Variables:
@@ -97,12 +101,12 @@ def unify(ci, cj):
         else:
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
 
-                x_function = ci[ci.find('(') + 1:ci.rfind(')')]
-                y_function = cj[cj.find('(') + 1:cj.rfind(')')]
+                x_function = extractVariable(ci)
+                y_function = extractVariable(cj)
 
                 if x_function.split("(")[0] in Functions:
-                    ciVariable = x_function[x_function.find('(') + 1:x_function.rfind(')')]
-                    cjVariable = y_function[y_function.find('(') + 1:y_function.rfind(')')]
+                    ciVariable = extractVariable(x_function)
+                    cjVariable = extractVariable(y_function)
                     if ciVariable in Variables:
                         ci = ci.replace(ciVariable, cjVariable)
                     elif cjVariable in Variables:
@@ -111,27 +115,27 @@ def unify(ci, cj):
 
             elif bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 2:
 
-                x_function = ci[ci.find('(') + 1:ci.rfind(')')]
+                x_function = extractVariable(ci)
                 if x_function.split("(")[0] in Functions:
                     cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
                     if cjVariable in Variables:
                         cj = cj.replace(cjVariable, x_function)
                 return ci, cj
             else:
-                y_function = cj[cj.find('(') + 1:cj.rfind(')')]
+                y_function = extractVariable(cj)
                 if y_function.split("(")[0] in Functions:
-                    ciVariable = ci[ci.find('(') + 1:ci.rfind(')')]
+                    ciVariable = extractVariable(ci)
                     if ciVariable in Variables:
                         ci = ci.replace(ciVariable, y_function)
                 return ci, cj
 
 
-def negationOf(clause):
-    if clause.find("!") != -1:
-        clause = clause.replace("!", "")
-    else:
-        clause = "!" + clause[0:]
-    return clause
+# def negationOf(clause):
+#     if clause.find("!") != -1:
+#         clause = clause.replace("!", "")
+#     else:
+#         clause = "!" + clause[0:]
+#     return clause
 
 
 def plResolve(ci, cj):  # return all possibility from two Clauses
@@ -144,7 +148,7 @@ def plResolve(ci, cj):  # return all possibility from two Clauses
     for i in ciOriginal:
         for j in cjOriginal:
             iUnified, jUnified = unify(i, j)  # Unify two to see if it can be same
-            if iUnified == negationOf(jUnified) or negationOf(iUnified) == jUnified:  #
+            if iUnified == ("!" + jUnified) or ("!" + iUnified) == jUnified:  #
                 ciTemp = ci.split(" ")
                 ciTemp.remove(i)
                 cjTemp = cj.split(" ")
@@ -204,7 +208,11 @@ def plResolution(kb):  # resolution function return true or false
                 kb.append(clause)
 
 
-
+def checkData():
+    if plResolution(Clauses):
+        print("no")
+    else:
+        print("yes")
 
 
 if len(sys.argv) < 1:
@@ -220,7 +228,6 @@ else:
         for i in range(5, len(lines)):
             Clauses.append(lines[i].strip().rstrip('\n'))
 
-if plResolution(Clauses):
-    print("no")
-else:
-    print("yes")
+
+if __name__ == "__main__":
+    checkData()
