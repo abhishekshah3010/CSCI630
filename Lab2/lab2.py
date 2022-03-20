@@ -29,7 +29,6 @@ def parseVariables(ci, cj):
 
 def parseDataForFunctions(ci, cj):
     _, _, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
-    3
 
     if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
@@ -101,12 +100,12 @@ def unify(ci, cj):
         else:
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
 
-                x_function = extractVariable(ci)
-                y_function = extractVariable(cj)
+                ciVariable = extractVariable(ci)
+                cjVariable = extractVariable(cj)
 
-                if x_function.split("(")[0] in Functions:
-                    ciVariable = extractVariable(x_function)
-                    cjVariable = extractVariable(y_function)
+                if ciVariable.split("(")[0] in Functions:
+                    ciVariable = extractVariable(ciVariable)
+                    cjVariable = extractVariable(cjVariable)
                     if ciVariable in Variables:
                         ci = ci.replace(ciVariable, cjVariable)
                     elif cjVariable in Variables:
@@ -115,35 +114,29 @@ def unify(ci, cj):
 
             elif bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 2:
 
-                x_function = extractVariable(ci)
-                if x_function.split("(")[0] in Functions:
+                ciVariable = extractVariable(ci)
+                if ciVariable.split("(")[0] in Functions:
                     cjVariable = cj[cj.find('(') + 1:cj.rfind(')')]
                     if cjVariable in Variables:
-                        cj = cj.replace(cjVariable, x_function)
+                        cj = cj.replace(cjVariable, ciVariable)
                 return ci, cj
             else:
-                y_function = extractVariable(cj)
-                if y_function.split("(")[0] in Functions:
+                cjVariable = extractVariable(cj)
+                if cjVariable.split("(")[0] in Functions:
                     ciVariable = extractVariable(ci)
                     if ciVariable in Variables:
-                        ci = ci.replace(ciVariable, y_function)
+                        ci = ci.replace(ciVariable, cjVariable)
                 return ci, cj
 
-
-# def negationOf(clause):
-#     if clause.find("!") != -1:
-#         clause = clause.replace("!", "")
-#     else:
-#         clause = "!" + clause[0:]
-#     return clause
 
 def clausesAfterResolution(ci, cj):
     clauses = []
-
     ciNew = ""
-    spaceBetweenClauses = ""
     if len(ci) > 1:
         spaceBetweenClauses = " "
+    else:
+        spaceBetweenClauses = ""
+
     for item in ci:
         if ciNew != "":
             ciNew = ciNew + spaceBetweenClauses + item
@@ -151,9 +144,11 @@ def clausesAfterResolution(ci, cj):
             ciNew = ciNew + item
 
     cjNew = ""
-    spaceBetweenClauses = ""
     if len(cj) > 1:
         spaceBetweenClauses = " "
+    else:
+        spaceBetweenClauses = ""
+
     for item in cj:
         if cjNew != "":
             cjNew = cjNew + spaceBetweenClauses + item
@@ -162,11 +157,12 @@ def clausesAfterResolution(ci, cj):
 
     if ciNew == "" and cjNew == "":
         clauses.append([])
+
+    if cjNew == "" or ciNew == "":
+        clauses.append(ciNew + cjNew)
     else:
-        if cjNew == "" or ciNew == "":
-            clauses.append(ciNew + cjNew)
-        else:
-            clauses.append(ciNew + " " + cjNew)
+        clauses.append(ciNew + " " + cjNew)
+
     return clauses
 
 
