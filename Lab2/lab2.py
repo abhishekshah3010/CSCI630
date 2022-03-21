@@ -45,6 +45,7 @@ def parseDataForFunctions(ci, cj):
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
             if ciVariableSet[i].find("(") != -1:
+
                 ciItemInVariable = ciVariableSet[i]
                 cjItemInVariable = cjVariableSet[i]
                 if ciItemInVariable.split("(")[0] in functions:
@@ -66,13 +67,13 @@ def unify(ci, cj):
 
         ciVariable, cjVariable, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
 
-        remove_spot = []
+        temp = []
         for item in range(len(ciVariableSet)):
             if ciVariableSet[item] in variables:
                 ci = ci.replace(ciVariableSet[item], cjVariableSet[item])
-                remove_spot.append(cjVariableSet[item])
+                temp.append(cjVariableSet[item])
 
-        for item in remove_spot:
+        for item in temp:
             cjVariableSet.remove(item)
 
         for item in range(len(cjVariableSet)):
@@ -89,7 +90,6 @@ def unify(ci, cj):
     else:
         ciVariable = extractVariable(ci)
         cjVariable = extractVariable(cj)
-
         if bracketsCountFor(ci) == 2 and bracketsCountFor(cj) == 2:  # only one variable or const
             if ciVariable in variables:
                 ci = ci.replace(ciVariable, cjVariable)
@@ -99,10 +99,8 @@ def unify(ci, cj):
 
         else:
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
-
                 ciVariable = extractVariable(ci)
                 cjVariable = extractVariable(cj)
-
                 if ciVariable.split("(")[0] in functions:
                     ciVariable = extractVariable(ciVariable)
                     cjVariable = extractVariable(cjVariable)
