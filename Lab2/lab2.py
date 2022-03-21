@@ -7,14 +7,6 @@ functions = []
 clauses = []
 
 
-def bracketsCountFor(clause):
-    brackets = 0
-    for b in clause:
-        if b == "(" or b == ")":
-            brackets = brackets + 1
-    return brackets
-
-
 def extractVariable(c):
     return c[c.find('(') + 1:c.rfind(')')]
 
@@ -25,6 +17,14 @@ def parseVariables(ci, cj):
     ciVariablesSplit = ciVariable.split(",")
     cjVariablesSplit = cjVariable.split(",")
     return ciVariable, cjVariable, ciVariablesSplit, cjVariablesSplit
+
+
+def bracketsCountFor(clause):
+    brackets = 0
+    for b in clause:
+        if b == "(" or b == ")":
+            brackets = brackets + 1
+    return brackets
 
 
 def fourBracketsForBoth(c1, c2):
@@ -38,20 +38,32 @@ def fourBracketsForBoth(c1, c2):
     return c1, c2
 
 
+def fourOrTwoBrackets(c, ci, cj):
+    if c.split("(")[0] in functions:
+        cjVariable = extractVariable(cj)
+        if cjVariable in variables:
+            cj = cj.replace(cjVariable, c)
+    return ci, cj
+
+
+def twoOrFourBrackets(c, ci, cj):
+    if c.split("(")[0] in functions:
+        ciVariable = extractVariable(ci)
+        if ciVariable in variables:
+            ci = ci.replace(ciVariable, c)
+    return ci, cj
+
+
+def twoBracketsForBoth(c1, ci, c2, cj):
+    if c1 in variables:
+        ci = ci.replace(c1, c2)
+    elif c2 in variables:
+        cj = cj.replace(c2, c1)
+    return ci, cj
+
+
 def parseDataForFunctions(ci, cj):
     _, _, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
-
-    if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
-        for i in range(len(ciVariableSet)):
-            if ciVariableSet[i] in variables:
-                ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
-        return ci, cj
-
-    if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) != 4:
-        for i in range(len(cjVariableSet)):
-            if cjVariableSet[i] in variables:
-                cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
-        return ci, cj
 
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
@@ -61,10 +73,23 @@ def parseDataForFunctions(ci, cj):
                 ci, cj = fourBracketsForBoth(ciItemInVariable, cjItemInVariable)
                 return ci, cj
 
+    if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) != 4:
+        for i in range(len(cjVariableSet)):
+            if cjVariableSet[i] in variables:
+                cj = cj.replace(cjVariableSet[i], ciVariableSet[i])
+        return ci, cj
+
+    if bracketsCountFor(ci) != 4 and bracketsCountFor(cj) == 4:
+        for i in range(len(ciVariableSet)):
+            if ciVariableSet[i] in variables:
+                ci = ci.replace(ciVariableSet[i], cjVariableSet[i])
+        return ci, cj
     return ci, cj
 
 
-def unify(ci, cj):
+def unification(ci, cj):
+    ciVariable = extractVariable(ci)
+    cjVariable = extractVariable(cj)
     if ci.find(",") != -1 and cj.find(",") != -1:
         if bracketsCountFor(ci) == 4 or bracketsCountFor(cj) == 4:
             ci, cj = parseDataForFunctions(ci, cj)
@@ -92,40 +117,24 @@ def unify(ci, cj):
         return ci, cj
 
     else:
-        ciVariable = extractVariable(ci)
-        cjVariable = extractVariable(cj)
         if bracketsCountFor(ci) == 2 and bracketsCountFor(cj) == 2:  # only one variable or const
-            if ciVariable in variables:
-                ci = ci.replace(ciVariable, cjVariable)
-            elif cjVariable in variables:
-                cj = cj.replace(cjVariable, ciVariable)
+            ci, cj = twoBracketsForBoth(ciVariable, ci, cjVariable, cj)
             return ci, cj
-
         else:
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
-                ciVariable = extractVariable(ci)
-                cjVariable = extractVariable(cj)
                 ci, cj = fourBracketsForBoth(ciVariable, cjVariable)
                 return ci, cj
 
             elif bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 2:
-                ciVariable = extractVariable(ci)
-                if ciVariable.split("(")[0] in functions:
-                    cjVariable = extractVariable(cj)
-                    if cjVariable in variables:
-                        cj = cj.replace(cjVariable, ciVariable)
+                ci, cj = fourOrTwoBrackets(ciVariable, ci, cj)
                 return ci, cj
             else:
-                cjVariable = extractVariable(cj)
-                if cjVariable.split("(")[0] in functions:
-                    ciVariable = extractVariable(ci)
-                    if ciVariable in variables:
-                        ci = ci.replace(ciVariable, cjVariable)
+                ci, cj = twoOrFourBrackets(cjVariable, ci, cj)
                 return ci, cj
 
 
 def clausesAfterResolution(ci, cj):
-    clauses = []
+    clausesPostResolution = []
     ciNew = ""
     if len(ci) > 1:
         spaceBetweenClauses = " "
@@ -151,14 +160,14 @@ def clausesAfterResolution(ci, cj):
             cjNew = cjNew + item
 
     if ciNew == "" and cjNew == "":
-        clauses.append([])
+        clausesPostResolution.append([])
 
     if cjNew == "" or ciNew == "":
-        clauses.append(ciNew + cjNew)
+        clausesPostResolution.append(ciNew + cjNew)
     else:
-        clauses.append(ciNew + " " + cjNew)
+        clausesPostResolution.append(ciNew + " " + cjNew)
 
-    return clauses
+    return clausesPostResolution
 
 
 def plResolve(ci, cj):  # return all possibility from two Clauses
@@ -170,7 +179,7 @@ def plResolve(ci, cj):  # return all possibility from two Clauses
     cjOriginal = cj.split(" ")
     for i in ciOriginal:
         for j in cjOriginal:
-            iUnified, jUnified = unify(i, j)  # Unify two to see if it can be same
+            iUnified, jUnified = unification(i, j)  # Unify two to see if it can be same
             if iUnified == ("!" + jUnified) or ("!" + iUnified) == jUnified:  #
                 ciTemp = ci.split(" ")
                 ciTemp.remove(i)
@@ -214,7 +223,7 @@ if len(sys.argv) < 1:
     print("Invalid number of arguments!")
     sys.exit(1)
 else:
-    with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:
+    with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/prop/p02.cnf") as f:
         lines = f.readlines()
         predicates = lines[0].split()[1:]
         variables = lines[1].split()[1:]
