@@ -25,17 +25,6 @@ def parseVariables(ci, cj):
     return ciVariable, cjVariable, ciVariablesSplit, cjVariablesSplit
 
 
-def bracketsCountFor(clause):
-    """
-    Logic for counting total brackets in a clause
-    """
-    brackets = 0
-    for b in clause:
-        if b == "(" or b == ")":
-            brackets = brackets + 1
-    return brackets
-
-
 def fourBracketsForBoth(ci, cj):
     """
     Logic for when ci and cj have 4 brackets in total
@@ -83,6 +72,17 @@ def twoBracketsForBoth(c1, ci, c2, cj):
     return ci, cj
 
 
+def bracketsCountFor(clause):
+    """
+    Logic for counting total brackets in a clause
+    """
+    brackets = 0
+    for b in clause:
+        if b == "(" or b == ")":
+            brackets = brackets + 1
+    return brackets
+
+
 def parseDataForFunctions(ci, cj):
     """
     Parsing data for files which contains functions, especially the SK() functions.
@@ -120,15 +120,13 @@ def unification(ci, cj):
     if ci.find(",") != -1 and cj.find(",") != -1:
         if bracketsCountFor(ci) == 4 or bracketsCountFor(cj) == 4:
             ci, cj = parseDataForFunctions(ci, cj)
-
         ciVariable, cjVariable, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
-
         temp = []
+
         for item in range(len(ciVariableSet)):
             if ciVariableSet[item] in variables:
                 ci = ci.replace(ciVariableSet[item], cjVariableSet[item])
                 temp.append(cjVariableSet[item])
-
         for item in temp:
             cjVariableSet.remove(item)
 
@@ -189,7 +187,6 @@ def clausesAfterResolution(ci, cj):
         clausesPostResolution.append(ciNew + cjNew)
     else:
         clausesPostResolution.append(ciNew + " " + cjNew)
-
     return clausesPostResolution
 
 
@@ -205,8 +202,8 @@ def plResolve(ci, cj):  # return all possibility from two Clauses
             iUnified, jUnified = unification(i, j)
             if iUnified == ("!" + jUnified) or ("!" + iUnified) == jUnified:
                 ciTemp = ci.split(" ")
-                ciTemp.remove(i)
                 cjTemp = cj.split(" ")
+                ciTemp.remove(i)
                 cjTemp.remove(j)
                 resolvents = clausesAfterResolution(ciTemp, cjTemp)
     return resolvents
@@ -250,7 +247,7 @@ if len(sys.argv) < 1:
     print("Invalid number of arguments!")
     sys.exit(1)
 else:
-    with open("/Users/abhishekshah/Documents/Spring 22/Ass-AI-630/AI Lab2/testcases/functions/f5.cnf") as f:
+    with open(sys.argv[1]) as f:
         lines = f.readlines()
         predicates = lines[0].split()[1:]
         variables = lines[1].split()[1:]
