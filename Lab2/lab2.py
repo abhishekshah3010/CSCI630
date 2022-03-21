@@ -27,6 +27,17 @@ def parseVariables(ci, cj):
     return ciVariable, cjVariable, ciVariablesSplit, cjVariablesSplit
 
 
+def fourBracketsForBoth(c1, c2):
+    if c1.split("(")[0] in functions:
+        ciVariable = extractVariable(c1)
+        cjVariable = extractVariable(c2)
+        if ciVariable in variables:
+            c1 = c1.replace(ciVariable, cjVariable)
+        elif cjVariable in variables:
+            c2 = c2.replace(cjVariable, ciVariable)
+    return c1, c2
+
+
 def parseDataForFunctions(ci, cj):
     _, _, ciVariableSet, cjVariableSet = parseVariables(ci, cj)
 
@@ -45,16 +56,9 @@ def parseDataForFunctions(ci, cj):
     if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
         for i in range(len(ciVariableSet)):
             if ciVariableSet[i].find("(") != -1:
-
                 ciItemInVariable = ciVariableSet[i]
                 cjItemInVariable = cjVariableSet[i]
-                if ciItemInVariable.split("(")[0] in functions:
-                    ciVariable = extractVariable(ciItemInVariable)
-                    cjVariable = extractVariable(cjItemInVariable)
-                    if ciVariable in variables:
-                        ci = ci.replace(ciVariable, cjVariable)
-                    elif cjVariable in variables:
-                        cj = cj.replace(cjVariable, ciVariable)
+                ci, cj = fourBracketsForBoth(ciItemInVariable, cjItemInVariable)
                 return ci, cj
 
     return ci, cj
@@ -101,17 +105,10 @@ def unify(ci, cj):
             if bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 4:
                 ciVariable = extractVariable(ci)
                 cjVariable = extractVariable(cj)
-                if ciVariable.split("(")[0] in functions:
-                    ciVariable = extractVariable(ciVariable)
-                    cjVariable = extractVariable(cjVariable)
-                    if ciVariable in variables:
-                        ci = ci.replace(ciVariable, cjVariable)
-                    elif cjVariable in variables:
-                        cj = cj.replace(cjVariable, ciVariable)
+                ci, cj = fourBracketsForBoth(ciVariable, cjVariable)
                 return ci, cj
 
             elif bracketsCountFor(ci) == 4 and bracketsCountFor(cj) == 2:
-
                 ciVariable = extractVariable(ci)
                 if ciVariable.split("(")[0] in functions:
                     cjVariable = extractVariable(cj)
