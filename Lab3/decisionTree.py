@@ -86,7 +86,7 @@ def totalDifferentValues(resultSet, index):
     return 0
 
 
-def collect_data_dt(exampleFile, hypothesisFile):
+def dtDataCollection(exampleFile, hypothesisFile):
     """
     Collection of data and calling the required functions
     :param exampleFile:Training file
@@ -131,28 +131,20 @@ def collect_data_dt(exampleFile, hypothesisFile):
     pickle.dump(rootNode, saveModel)
 
 
-def dtTrain(rootNode, features, visited, results, total_results, depth, prevLevelPrediction):
+def dtTrain(rootNode, features, visited, languageLabel, indexOfExamples, depth, prevLevelPrediction):
     """
-    Decides on the best splitting attribute for a given depth , make a node for that and connects it with
-    two nodes containing the left and right childs for the given so called root node
-    :param rootNode: The node that is being considered right now
-    :param features:Total set of attributes and their values
-    :param visited:Every node that has been seen till now
-    :param results:Final results in a list
-    :param total_results:Index of examples that are there at this level
-    :param depth:Level in consideration
-    :param prevLevelPrediction:Prediction made before this depth
-    :return:None
+    Selects the best splitting attribute for a given depth.
+    Makes a root node for that and connects it the left and right child.
     """
 
-    # If depth is reached return the plurality of the remaining set
+    # If depth is reached
     if depth == len(features) - 1:
         enLabel = 0
         nlLabel = 0
-        for index in total_results:
-            if results[index] == 'en':
+        for index in indexOfExamples:
+            if languageLabel[index] == 'en':
                 enLabel += 1
-            elif results[index] == 'nl':
+            elif languageLabel[index] == 'nl':
                 nlLabel += 1
         if enLabel > nlLabel:
             rootNode.value = 'en'
@@ -161,141 +153,132 @@ def dtTrain(rootNode, features, visited, results, total_results, depth, prevLeve
             rootNode.value = 'nl'
             print("nl")
 
-    # If there are no examples left return the prediction made at the previous level
-    elif len(total_results) == 0:
+    # If no statements left
+    elif len(indexOfExamples) == 0:
         rootNode.value = prevLevelPrediction
         print(prevLevelPrediction)
 
-    # If there are only positive or only negative examples left return the prediction directly from the plurality
-    elif totalDifferentValues(results, total_results) == 0:
-        rootNode.value = results[total_results[0]]
-        print(results[total_results[0]])
+    # If only positive or negative sentences left
+    elif totalDifferentValues(languageLabel, indexOfExamples) == 0:
+        rootNode.value = languageLabel[indexOfExamples[0]]
+        print(languageLabel[indexOfExamples[0]])
 
-    # If all the attributes have been used for splitting along a given path return the prediction of the set of examples
     elif len(features) == len(visited):
         enLabel = 0
         nlLabel = 0
-        for index in total_results:
-            if results[index] == 'en':
+        for index in indexOfExamples:
+            if languageLabel[index] == 'en':
                 enLabel = enLabel + 1
-            elif results[index] == 'nl':
+            elif languageLabel[index] == 'nl':
                 nlLabel = nlLabel + 1
-        if enLabel > nlLabel:
-            rootNode.value = 'en'
-        else:
+        if enLabel < nlLabel:
             rootNode.value = 'nl'
+        else:
+            rootNode.value = 'en'
 
-    # Find the attribute to split on
+    # Search for the attribute to split on
     else:
         gain = []
-        results_en = 0
-        results_nl = 0
+        enResult = 0
+        nlResult = 0
 
         # Take the total number of positive and negative examples at this level
-        for index in total_results:
-            if results[index] == 'en':
-                results_en = results_en + 1
+        for i in indexOfExamples:
+            if languageLabel[i] == 'en':
+                enResult = enResult + 1
             else:
-                results_nl = results_nl + 1
+                nlResult = nlResult + 1
         # For each attribute
-        for index_attribute in range(len(features)):
-
-            # Check if it has already been used for splitting so , no gain in splitting over it again
-            if index_attribute in visited:
+        featuresLength = len(features)
+        for featureIndex in range(featuresLength):
+            # If already been used for splitting so, no gain in splitting again
+            if featureIndex in visited:
                 gain.append(0)
                 continue
-
             # Else see for the best splitting attribute
             else:
-                count_true_en = 0
-                count_true_nl = 0
-                count_false_en = 0
-                count_false_nl = 0
+                enTrue = 0
+                enFalse = 0
+                nlTrue = 0
+                nlFalse = 0
 
-                for index in total_results:
+                # update true or false values
+                for index in indexOfExamples:
+                    if features[featureIndex][index] is True and languageLabel[index] == 'en':
+                        enTrue = enTrue + 1
+                    elif features[featureIndex][index] is True and languageLabel[index] == 'nl':
+                        nlTrue = nlTrue + 1
+                    elif features[featureIndex][index] is False and languageLabel[index] == 'en':
+                        enFalse = enFalse + 1
+                    elif features[featureIndex][index] is False and languageLabel[index] == 'nl':
+                        nlFalse = nlFalse + 1
 
-                    if features[index_attribute][index] is True and results[index] == 'en':
-                        count_true_en = count_true_en + 1
-                    elif features[index_attribute][index] is True and results[index] == 'nl':
-                        count_true_nl = count_true_nl + 1
-                    elif features[index_attribute][index] is False and results[index] == 'en':
-                        count_false_en = count_false_en + 1
-                    elif features[index_attribute][index] is False and results[index] == 'nl':
-                        count_false_nl = count_false_nl + 1
+                allTrueFalse = (enFalse + nlFalse) / (nlResult + nlResult)
+                allTrue = enTrue + nlTrue
+                allFalse = enFalse + nlFalse
+                allResult = nlResult + enResult
+                probTrue = enTrue / (nlTrue + enTrue)
+                probFalse = enFalse / (nlFalse + enFalse)
 
-                # If only positive or only negative examples remain at a particular point , no point in splitting
-                if (count_true_nl + count_true_en == 0) or (count_false_en + count_false_nl == 0):
-                    gain_for_attribute = 0
-                    gain.append(gain_for_attribute)
+                # If only positive or only negative examples remain, don't split
+                if (nlTrue + enTrue == 0) or (enFalse + nlFalse == 0):
+                    gain.append(0)
                     continue
-                # Handliing certain outlier conditions
-                if count_true_en == 0:
-                    rem_true_value = 0
-                    # rem_false_value = 0
-                    rem_false_value = (
-                                              (count_false_en + count_false_nl) / (results_nl + results_nl)) * calculateEntropy(
-                        count_false_en / (count_false_nl + count_false_en))
-                elif count_false_en == 0:
-                    rem_false_value = 0
-                    # rem_true_value = 0
-                    rem_true_value = ((count_true_en + count_true_nl) / (results_nl + results_en)) * calculateEntropy(
-                        count_true_en / (count_true_nl + count_true_en))
-                else:
-                    rem_true_value = ((count_true_en + count_true_nl) / (results_nl + results_en)) * calculateEntropy(
-                        count_true_en / (count_true_nl + count_true_en))
 
-                    rem_false_value = (
-                                              (count_false_en + count_false_nl) / (results_nl + results_en)) * calculateEntropy(
-                        count_false_en / (count_false_nl + count_false_en))
+                if enTrue == 0:
+                    trueValuePending = 0
+                    falseValuePending = allTrueFalse * \
+                                        calculateEntropy(probFalse)
+                elif enFalse == 0:
+                    falseValuePending = 0
+                    trueValuePending = (allTrue / allResult) * \
+                                       calculateEntropy(probTrue)
+                else:
+                    trueValuePending = (allTrue / allResult) \
+                                       * calculateEntropy(probTrue)
+                    falseValuePending = (allFalse / allResult) * \
+                                        calculateEntropy(probFalse)
 
                 # Find the gain for each attribute
-                gain_for_attribute = calculateEntropy(results_en / (results_en + results_nl)) - (rem_true_value +
-                                                                                                 rem_false_value)
-                gain.append(gain_for_attribute)
+                informationGain = calculateEntropy(enResult / allResult) - (trueValuePending + falseValuePending)
+                gain.append(informationGain)
 
-        # Check if the max gain is 0 then return back as no more gain possible along this path
+        # Check if the max gain is 0 then return as no more gain possible.
         if max(gain) == 0:
             rootNode.value = prevLevelPrediction
             print(rootNode.value)
             return
 
-        # Select the max gain attribute
-        max_gain_attribute = gain.index(max(gain))
+        # Select the max gain feature
+        maxGainFeature = gain.index(max(gain))
+        visited.append(maxGainFeature)
 
-        visited.append(max_gain_attribute)
+        truePortion = []
+        falsePortion = []
 
-        index_True = []
-        index_False = []
-
-        # Separate out true and false portion for the found out max gain attribute
-        for index in total_results:
-            if features[max_gain_attribute][index] is True:
-                index_True.append(index)
+        # Separate out true and false portion for the max gain feature
+        for index in indexOfExamples:
+            if features[maxGainFeature][index] is True:
+                truePortion.append(index)
             else:
-                index_False.append(index)
+                falsePortion.append(index)
 
         # Prediction at this stage
-        prediction_at_this_stage = ''
-
-        if results_en > results_nl:
-            prediction_at_this_stage = 'en'
+        currentLevelPrediction = ''
+        if enResult > nlResult:
+            currentLevelPrediction = 'en'
         else:
-            prediction_at_this_stage = 'nl'
+            currentLevelPrediction = 'nl'
 
-        bool_false = False
-        bool_true = True
-        rootNode.value = max_gain_attribute
-
-        # Make left portion for the max gain attribute
-        left_obj = tree(features, None, results, index_True, depth + 1,
-                        prediction_at_this_stage, bool_true)
-        # Make right portion for the max gain attribute
-        right_obj = tree(features, None, results, index_False, depth + 1,
-                         prediction_at_this_stage, bool_false)
-        rootNode.left = left_obj
-        rootNode.right = right_obj
-        # Recurse left and right portions
-        dtTrain(left_obj, features, visited, results, index_True, depth + 1, prediction_at_this_stage)
-        dtTrain(right_obj, features, visited, results, index_False, depth + 1, prediction_at_this_stage)
-
-        del visited[-1]
+        # new root node
+        rootNode.value = maxGainFeature
+        # left node
+        rootNode.left = tree(features, None, languageLabel, truePortion, depth + 1,
+                             currentLevelPrediction, True)
+        # right node
+        rootNode.right = tree(features, None, languageLabel, falsePortion, depth + 1,
+                              currentLevelPrediction, False)
+        # Recurse left and right tree
+        dtTrain(rootNode.left, features, visited, languageLabel, truePortion, depth + 1, currentLevelPrediction)
+        dtTrain(rootNode.right, features, visited, languageLabel, falsePortion, depth + 1, currentLevelPrediction)
+        visited = visited[:-1]
