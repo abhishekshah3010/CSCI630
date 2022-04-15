@@ -19,9 +19,7 @@ def readTrainingData(trainingDataFile):
 
     # get all the statements
     allStatements = allData.split('|')
-    print(allStatements)
     all_data_stripped_space = allData.split()
-    print(all_data_stripped_space)
 
     for i in range(len(allStatements)):
         if i < 1:
@@ -40,9 +38,6 @@ def readTrainingData(trainingDataFile):
     return allStatements, languageLabel
 
 
-_, _ = readTrainingData('train.dat')
-
-
 def entropy(value):
     """
     Entropy function
@@ -52,6 +47,30 @@ def entropy(value):
     if value == 1:
         return 0
     return (-1) * (value * math.log(value, 2.0) + (1 - value) * math.log((1 - value), 2.0))
+
+
+def appendFeatures(sentence_list):
+    feature1, feature2, feature3, feature4, feature5, feature6, feature7, \
+    feature8, feature9, feature10, feature11 = ([] for i in range(11))
+
+    # Based on the sentences fill the values for the attributes
+    for line in sentence_list:
+        feature1.append(containsQ(line))
+        feature2.append(containsX(line))
+        feature3.append(check_avg_word_length_greater_than_5(line))
+        feature4.append(presence_of_van(line))
+        feature5.append(presence_of_de_het(line))
+        feature6.append(check_for_een(line))
+        feature7.append(check_for_en(line))
+        feature8.append(check_for_common_dutch_words(line))
+        feature9.append(check_for_common_english_words(line))
+        feature10.append(presence_of_a_an_the(line))
+        feature11.append(check_presence_of_and(line))
+
+    attributes = [feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8,
+                  feature9, feature10, feature11]
+
+    return attributes
 
 
 def predict_dt(hypothesis, file):
@@ -83,37 +102,9 @@ def predict_dt(hypothesis, file):
                 sentence = ''
                 counter = 0
 
-    attribute1 = []
-    attribute2 = []
-    attribute3 = []
-    attribute4 = []
-    attribute5 = []
-    attribute6 = []
-    attribute7 = []
-    attribute8 = []
-    attribute9 = []
-    attribute10 = []
-    attribute11 = []
-
-    # Based on the sentences fill the values for the attributes
-    for line in sentence_list:
-        attribute1.append(containsQ(line))
-        attribute2.append(containsX(line))
-        attribute3.append(check_avg_word_length_greater_than_5(line))
-        attribute4.append(presence_of_van(line))
-        attribute5.append(presence_of_de_het(line))
-        attribute6.append(check_for_een(line))
-        attribute7.append(check_for_en(line))
-        attribute8.append(check_for_common_dutch_words(line))
-        attribute9.append(check_for_common_english_words(line))
-        attribute10.append(presence_of_a_an_the(line))
-        attribute11.append(check_presence_of_and(line))
-
-    attributes = [attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8,
-                  attribute9, attribute10, attribute11]
+    attributes = appendFeatures(sentence_list)
 
     statement = 0
-
     # For every statement run through the decision tree to find out the langauge for the examples
     for sentence in sentence_list:
         object_temp = object
@@ -149,44 +140,8 @@ def collect_data_dt(exampleFile, hypothesisFile):
     """
 
     statements, results = readTrainingData(exampleFile)
-    attribute1 = []
-    attribute2 = []
-    attribute3 = []
-    attribute4 = []
-    attribute5 = []
-    attribute6 = []
-    attribute7 = []
-    attribute8 = []
-    attribute9 = []
-    attribute10 = []
-    attribute11 = []
 
-    # For each line set the values for features for that line
-    for line in statements:
-        attribute1.append(containsQ(line))
-        attribute2.append(containsX(line))
-        attribute3.append(check_avg_word_length_greater_than_5(line))
-        attribute4.append(presence_of_van(line))
-        attribute5.append(presence_of_de_het(line))
-        attribute6.append(check_for_een(line))
-        attribute7.append(check_for_en(line))
-        attribute8.append(check_for_common_dutch_words(line))
-        attribute9.append(check_for_common_english_words(line))
-        attribute10.append(presence_of_a_an_the(line))
-        attribute11.append(check_presence_of_and(line))
-
-    attributes = []
-    attributes.append(attribute1)
-    attributes.append(attribute2)
-    attributes.append(attribute3)
-    attributes.append(attribute4)
-    attributes.append(attribute5)
-    attributes.append(attribute6)
-    attributes.append(attribute7)
-    attributes.append(attribute8)
-    attributes.append(attribute9)
-    attributes.append(attribute10)
-    attributes.append(attribute11)
+    attributes = appendFeatures(statements)
 
     number_lst = []
     for i in range(len(results)):
