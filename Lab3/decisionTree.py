@@ -4,39 +4,43 @@ from checkFeatures import *
 import pickle
 
 
-def gather_data(file):
+def readTrainingData(trainingDataFile):
     """
-    Gathers data from the train.dat file for training
-    :param file:input training file
+    Read data from the train.dat file for training
+    :param trainingDataFile:input training file
     :return:list of statements and final predictions
     """
 
-    # Open file
-    file_details = open(file, encoding="utf-8-sig")
-    all_details = ''
-    for file_lines in file_details:
-        all_details += file_lines
+    # open file
+    file = open(trainingDataFile)
+    allData = ""
+    for lines in file:
+        allData = allData + lines
 
-    # Get all the statements
-    statements = all_details.split('|')
-    all_data_stripped_space = all_details.split()
+    # get all the statements
+    allStatements = allData.split('|')
+    print(allStatements)
+    all_data_stripped_space = allData.split()
+    print(all_data_stripped_space)
 
-    for index in range(len(statements)):
-        if index < 1:
+    for i in range(len(allStatements)):
+        if i < 1:
             continue
-        statements[index] = statements[index][:-4]
-    statements = statements[1:]
+        allStatements[i] = allStatements[i][:-4]
+    allStatements = allStatements[1:]
 
     # Get all the results
-
-    results = []
-    pointer = 0
+    languageLabel = []
+    index = 0
     for values in all_data_stripped_space:
         if values.startswith('nl|') or values.startswith('en|'):
-            results.insert(pointer, values[0:2])
-            pointer = pointer + 1
+            languageLabel.insert(index, values[0:2])
+            index = index + 1
+    #
+    return allStatements, languageLabel
 
-    return statements, results
+
+_, _ = readTrainingData('train.dat')
 
 
 def entropy(value):
@@ -137,16 +141,14 @@ def number_of_diff_values(values, total):
     return 0
 
 
-def collect_data_dt(example_file, hypothesis_file):
+def collect_data_dt(exampleFile, hypothesisFile):
     """
     Collection of data and calling the required functions
-    :param example_file:Training file
-    :param hypothesis_file:File to which hypothesis is to be written
-    :return:None
+    :param exampleFile:Training file
+    :param hypothesisFile:File to which hypothesis is to be written
     """
 
-    statements, results = gather_data(example_file)
-    print(len(results))
+    statements, results = readTrainingData(exampleFile)
     attribute1 = []
     attribute2 = []
     attribute3 = []
@@ -192,14 +194,13 @@ def collect_data_dt(example_file, hypothesis_file):
 
     # To keep track of attributes splitted along a path
     seen = []
-    root = tree(attributes,None, results, number_lst, 0, None, None)
+    root = tree(attributes, None, results, number_lst, 0, None, None)
 
     # Calling decision tree function here
     value = train_decision_tree(root, attributes, seen, results, number_lst, 0, None)
 
-
     # Dumping the hypothesis to a file using pickle
-    filehandler = open(hypothesis_file, 'wb')
+    filehandler = open(hypothesisFile, 'wb')
     pickle.dump(root, filehandler)
 
 
@@ -232,9 +233,9 @@ def train_decision_tree(root, attributes, seen, results, total_results, depth, p
         counten = 0
         countnl = 0
         for index in total_results:
-            if results[index] is 'en':
+            if results[index] == 'en':
                 counten = counten + 1
-            elif results[index] is 'nl':
+            elif results[index] == 'nl':
                 countnl = countnl + 1
         if counten > countnl:
             root.value = 'en'
@@ -251,16 +252,16 @@ def train_decision_tree(root, attributes, seen, results, total_results, depth, p
     # If there are only positive or only negative examples left return the prediction directly from the plurality
     elif number_of_diff_values(results, total_results) == 0:
         root.value = results[total_results[0]]
-        print( results[total_results[0]])
+        print(results[total_results[0]])
 
     # If all the attributes have been used for splitting along a given path return the prediction of the set of examples
     elif len(attributes) == len(seen):
         counten = 0
         countnl = 0
         for index in total_results:
-            if results[index] is 'en':
+            if results[index] == 'en':
                 counten = counten + 1
-            elif results[index] is 'nl':
+            elif results[index] == 'nl':
                 countnl = countnl + 1
         if counten > countnl:
             root.value = 'en'
@@ -315,11 +316,11 @@ def train_decision_tree(root, attributes, seen, results, total_results, depth, p
                     rem_true_value = 0
                     # rem_false_value = 0
                     rem_false_value = (
-                                      (count_false_en + count_false_nl) / (results_nl + results_nl)) * entropy(
+                                              (count_false_en + count_false_nl) / (results_nl + results_nl)) * entropy(
                         count_false_en / (count_false_nl + count_false_en))
                 elif count_false_en == 0:
                     rem_false_value = 0
-                    #rem_true_value = 0
+                    # rem_true_value = 0
                     rem_true_value = ((count_true_en + count_true_nl) / (results_nl + results_en)) * entropy(
                         count_true_en / (count_true_nl + count_true_en))
                 else:
@@ -327,14 +328,14 @@ def train_decision_tree(root, attributes, seen, results, total_results, depth, p
                         count_true_en / (count_true_nl + count_true_en))
 
                     rem_false_value = (
-                                      (count_false_en + count_false_nl) / (results_nl + results_en)) * entropy(
+                                              (count_false_en + count_false_nl) / (results_nl + results_en)) * entropy(
                         count_false_en / (count_false_nl + count_false_en))
 
                 # Find the gain for each attribute
                 gain_for_attribute = entropy(results_en / (results_en + results_nl)) - (rem_true_value +
-                                                                                             rem_false_value)
+                                                                                        rem_false_value)
                 gain.append(gain_for_attribute)
-       # Check if the max gain is 0 then return back as no more gain possible along this path
+        # Check if the max gain is 0 then return back as no more gain possible along this path
         continue_var = check_for_0_gain(gain)
         if continue_var is False:
             root.value = prevprediction
@@ -370,17 +371,16 @@ def train_decision_tree(root, attributes, seen, results, total_results, depth, p
 
         # Make left portion for the max gain attribute
 
-        left_obj = tree(attributes, None,results, index_True, depth + 1,
-                          prediction_at_this_stage, bool_true)
+        left_obj = tree(attributes, None, results, index_True, depth + 1,
+                        prediction_at_this_stage, bool_true)
         # Make right portion for the max gain attribute
 
-        right_obj = tree(attributes,None, results, index_False, depth + 1,
-                           prediction_at_this_stage, bool_false)
+        right_obj = tree(attributes, None, results, index_False, depth + 1,
+                         prediction_at_this_stage, bool_false)
         root.left = left_obj
         root.right = right_obj
         # Recurse left and right portions
-        train_decision_tree(left_obj,attributes,seen,results,index_True,depth + 1,prediction_at_this_stage)
-        train_decision_tree(right_obj,attributes,seen,results,index_False,depth + 1,prediction_at_this_stage)
+        train_decision_tree(left_obj, attributes, seen, results, index_True, depth + 1, prediction_at_this_stage)
+        train_decision_tree(right_obj, attributes, seen, results, index_False, depth + 1, prediction_at_this_stage)
 
         del seen[-1]
-
