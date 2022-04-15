@@ -1,11 +1,11 @@
 class tree:
-    def __init__(self, attributes, seen, results, total_results, depth, prediction_at_this_stage, boolean):
-        self.attributes = attributes
-        self.seen = seen
+    def __init__(self, features, visited, results, indexes, depth, currentLevelPrediction, boolean):
+        self.features = features
+        self.visited = visited
         self.results = results
-        self.total_results = total_results
+        self.indexes = indexes
         self.depth = depth
-        self.prediction_at_this_stage = prediction_at_this_stage
+        self.currentLevelPrediction = currentLevelPrediction
         self.bool = boolean
         self.value = None
         self.left = None

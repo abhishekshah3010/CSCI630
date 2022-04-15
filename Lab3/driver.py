@@ -11,12 +11,12 @@ def main():
     """
     if sys.argv[1] == 'train':
         if sys.argv[4] == 'dt':
-            collect_data_dt(sys.argv[2], sys.argv[3])
+            dtDataCollection(sys.argv[2], sys.argv[3])
         else:
             collect_data_ada(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'predict':
         if sys.argv[4] == 'dt':
-            predict_dt(sys.argv[2], sys.argv[3])
+            dtPredict(sys.argv[2], sys.argv[3])
         else:
             predict_ada(sys.argv[2], sys.argv[3])
 
