@@ -117,14 +117,14 @@ def dtDataCollection(exampleFile, hypothesisFile):
             index = index + 1
 
     features = appendFeatures(allStatements)
-    number_lst = [i for i in range(len(languageLabel))]
+    indexes = [i for i in range(len(languageLabel))]
 
     # To keep track of features visited along the sentence
     visited = []
-    rootNode = tree(features, None, languageLabel, number_lst, 0, None, None)
+    rootNode = tree(features, None, languageLabel, indexes, 0, None, None)
 
     # Calling decision tree function here
-    dtTrain(rootNode, features, visited, languageLabel, number_lst, 0, None)
+    dtTrain(rootNode, features, visited, languageLabel, indexes, 0, None)
 
     # Saving/Dumping the hypothesisFile
     saveModel = open(hypothesisFile, 'wb')
