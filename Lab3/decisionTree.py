@@ -4,38 +4,6 @@ from checkFeatures import *
 import pickle
 
 
-def readTrainingData(trainingDataFile):
-    """
-    Read data from the train.dat file for training
-    """
-
-    # open training data file
-    trainData = open(trainingDataFile, 'r')
-    allData = ""
-    for lines in trainData:
-        allData = allData + lines
-
-    # get all the data in the file
-    allStatements = allData.split('|')
-    countAllStatements = len(allStatements)
-    allWords = allData.split()
-
-    for i in range(countAllStatements):
-        if i < 1:
-            continue
-        allStatements[i] = allStatements[i][:-4]
-    allStatements = allStatements[1:]
-
-    # Get all the language label(en or nl)
-    languageLabel = []
-    index = 0
-    for word in allWords:
-        if word.startswith('nl|') or word.startswith('en|'):
-            languageLabel.insert(index, word[:2])
-            index = index + 1
-    return allStatements, languageLabel
-
-
 def calculateEntropy(value):
     """
     Entropy function
@@ -52,25 +20,20 @@ def appendFeatures(allSentences):
     """
     Creates features list
     """
-    feature1, feature2, feature3, feature4, feature5, feature6, feature7, \
-    feature8, feature9, feature10, feature11 = ([] for _ in range(11))
+    feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8 = ([] for _ in range(8))
 
     # Based on the sentences fill the values for the features
     for line in allSentences:
-        feature1.append(containsQ(line))
-        feature2.append(containsX(line))
-        feature3.append(check_avg_word_length_greater_than_5(line))
-        feature4.append(presence_of_van(line))
-        feature5.append(presence_of_de_het(line))
-        feature6.append(check_for_een(line))
-        feature7.append(check_for_en(line))
-        feature8.append(check_for_common_dutch_words(line))
-        feature9.append(check_for_common_english_words(line))
-        feature10.append(presence_of_a_an_the(line))
-        feature11.append(check_presence_of_and(line))
+        feature1.append(commonDutchWords(line))
+        feature2.append(commonEnglishWords(line))
+        feature3.append(englishArticles(line))
+        feature4.append(checkAvgLenGreaterThan5(line))
+        feature5.append(containsX(line))
+        feature6.append(enWord(line))
+        feature7.append(stringVan(line))
+        feature8.append(stringDeHet(line))
 
-    features = [feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8,
-                  feature9, feature10, feature11]
+    features = [feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8]
 
     return features
 
@@ -137,11 +100,31 @@ def collect_data_dt(exampleFile, hypothesisFile):
     :param exampleFile:Training file
     :param hypothesisFile:File to which hypothesis is to be written
     """
+    trainData = open(exampleFile, 'r')
+    allData = ""
+    for lines in trainData:
+        allData = allData + lines
 
-    allStatements, languageLabel = readTrainingData(exampleFile)
+    # get all the data in the file
+    allStatements = allData.split('|')
+    countAllStatements = len(allStatements)
+    allWords = allData.split()
+
+    for i in range(countAllStatements):
+        if i < 1:
+            continue
+        allStatements[i] = allStatements[i][:-4]
+    allStatements = allStatements[1:]
+
+    # Get all the language label(en or nl)
+    languageLabel = []
+    index = 0
+    for word in allWords:
+        if word.startswith('nl|') or word.startswith('en|'):
+            languageLabel.insert(index, word[:2])
+            index = index + 1
 
     features = appendFeatures(allStatements)
-
     number_lst = [i for i in range(len(languageLabel))]
 
     # To keep track of features visited along the sentence
@@ -277,6 +260,7 @@ def dtTrain(rootNode, features, visited, results, total_results, depth, prevLeve
                 gain_for_attribute = calculateEntropy(results_en / (results_en + results_nl)) - (rem_true_value +
                                                                                                  rem_false_value)
                 gain.append(gain_for_attribute)
+
         # Check if the max gain is 0 then return back as no more gain possible along this path
         if max(gain) == 0:
             rootNode.value = prevLevelPrediction
