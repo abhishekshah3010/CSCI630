@@ -4,15 +4,13 @@ from checkFeatures import *
 import pickle
 
 
-def calculateEntropy(value):
+def calculateEntropy(inputValue):
     """
-    Entropy function
-    :param value:Input value
-    :return:Calculate entropy and return
+    Function to calculate entropy
     """
-    if value == 1:
+    if inputValue == 1:
         return 0
-    entropy = (-1) * (value * math.log(value, 2.0) + (1 - value) * math.log((1 - value), 2.0))
+    entropy = (-1) * (inputValue * math.log(inputValue, 2.0) + (1 - inputValue) * math.log((1 - inputValue), 2.0))
     return entropy
 
 
@@ -20,21 +18,16 @@ def appendFeatures(allSentences):
     """
     Creates features list
     """
-    feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8 = ([] for _ in range(8))
+    feature1, feature2, feature3, feature4, feature5 = ([] for _ in range(5))
 
     # Based on the sentences fill the values for the features
     for line in allSentences:
         feature1.append(commonDutchWords(line))
         feature2.append(commonEnglishWords(line))
         feature3.append(englishArticles(line))
-        feature4.append(checkAvgLenGreaterThan5(line))
-        feature5.append(containsX(line))
-        feature6.append(enWord(line))
-        feature7.append(stringVan(line))
-        feature8.append(stringDeHet(line))
-
-    features = [feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8]
-
+        feature4.append(stringVan(line))
+        feature5.append(stringDeHet(line))
+    features = [feature1, feature2, feature3, feature4, feature5]
     return features
 
 
@@ -47,28 +40,27 @@ def dtPredict(hypothesis, file):
     loadModel = pickle.load(open(hypothesis, 'rb'))
     testDataFile = open(file)
     allStatements = []
-    sentence = ""
+    line = ""
     wordCounter = 0
 
     # Grab 15-word sentence from the testData file
     for line in testDataFile:
         words = line.split()
-
         for word in words:
             if wordCounter != 14:
-                sentence = sentence + word + " "
+                line = line + word + " "
                 wordCounter = wordCounter + 1
             else:
-                sentence = sentence + word
-                allStatements.append(sentence)
-                sentence = ""
+                line = line + word
+                allStatements.append(line)
+                line = ""
                 wordCounter = 0
 
     features = appendFeatures(allStatements)
 
     statementCounter = 0
-    # For every statement run through the decision tree to find out the langauge for the examples
-    for sentence in allStatements:
+    # Find out the langaugeLabel for each statement
+    for _ in allStatements:
         model = loadModel
         while type(model.value) != str:
             value = features[model.value][statementCounter]
@@ -80,17 +72,17 @@ def dtPredict(hypothesis, file):
         statementCounter = statementCounter + 1
 
 
-def number_of_diff_values(values, total):
+def totalDifferentValues(resultSet, index):
     """
-    To check for total positive or total negative examples in a set
-    :param values:Input set
-    :param total:Indices
+    Checks for total positive or total negative data
+    :param resultSet:Input set
+    :param index:Indices
     :return:Return based on whether total negative or positive examples
     """
-    value = values[total[0]]
-    for i in total:
-        if value != values[i]:
-            return 10
+    value = resultSet[index[0]]
+    for i in index:
+        if value != resultSet[i]:
+            return 1
     return 0
 
 
@@ -175,7 +167,7 @@ def dtTrain(rootNode, features, visited, results, total_results, depth, prevLeve
         print(prevLevelPrediction)
 
     # If there are only positive or only negative examples left return the prediction directly from the plurality
-    elif number_of_diff_values(results, total_results) == 0:
+    elif totalDifferentValues(results, total_results) == 0:
         rootNode.value = results[total_results[0]]
         print(results[total_results[0]])
 
