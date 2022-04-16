@@ -10,15 +10,15 @@ def main():
     Testing: python3 driver.py predict <hypothesis> <file> <testing-type(dt or ada)>
     """
     if sys.argv[1] == 'train':
-        if sys.argv[4] == 'dt':
+        if sys.argv[4] == 'ada':
+            adaDataCollection(sys.argv[2], sys.argv[3])
+        else:
             dtDataCollection(sys.argv[2], sys.argv[3])
-        else:
-            collect_data_ada(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'predict':
-        if sys.argv[4] == 'dt':
-            dtPredict(sys.argv[2], sys.argv[3])
+        if sys.argv[4] == 'ada':
+            adaPredict(sys.argv[2], sys.argv[3])
         else:
-            predict_ada(sys.argv[2], sys.argv[3])
+            dtPredict(sys.argv[2], sys.argv[3])
 
 
 if __name__ == "__main__":

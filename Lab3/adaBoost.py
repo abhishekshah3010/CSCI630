@@ -149,8 +149,8 @@ def returnDecisionStump(depth, rootNode, features, languageLabel, indexOfExample
 
     for featureIndex in range(len(features)):
         enTrue = 0
-        nlTrue = 0
         enFalse = 0
+        nlTrue = 0
         nlFalse = 0
         for index in indexOfExamples:
             if features[featureIndex][index] is True and languageLabel[index] == 'en':
@@ -207,41 +207,50 @@ def returnDecisionStump(depth, rootNode, features, languageLabel, indexOfExample
             else:
                 nlFalseMax = nlFalseMax + 1 * weights[index]
 
-    leftNode = tree(features, None, languageLabel, None, depth + 1,
-                    None, None)
-    rightNode = tree(features, None, languageLabel, None, depth + 1,
-                     None, None)
+    rootNode.left = tree(features, None, languageLabel, None, depth + 1, None, None)
+    rootNode.right = tree(features, None, languageLabel, None, depth + 1,None, None)
 
     if enTrueMax < nlTrueMax:
-        leftNode.value = 'nl'
+        rootNode.left.value = 'nl'
     else:
-        leftNode.value = 'en'
+        rootNode.left.value = 'en'
 
     if enFalseMax < nlFalseMax:
-        rightNode.value = 'nl'
+        rootNode.right.value = 'nl'
     else:
-        rightNode.value = 'en'
+        rootNode.right.value = 'en'
 
-    rootNode.left = leftNode
-    rootNode.right = rightNode
     return rootNode
 
 
-def adaPredict(hypothesis, file):
+def adaStumpPredict(stump, sentence, features, index):
     """
-    Making the prediction using the saved adaboost model
-    :param hypothesis:File containing the adaboost model
-    :param file:Test file to be tested
-    :return:None
+    Returns prediction based on the input hypothesis(stump) in consideration
+    :param stump:Input hypothesis
+    :param sentence:Input sentence
+    :param features:Total attributes/features we have decided on
+    :param index:Index of the input test statement in the test statement list
+    :return:
     """
-    # Loading model from the file
-    loadModel = pickle.load(open(hypothesis, 'rb'))
+    featureValue = stump.value
+    if features[featureValue][index] is True:
+        if stump.left.value == 'en':
+            return 1
+        else:
+            return -1
+    else:
+        if stump.right.value == 'en':
+            return 1
+        else:
+            return -1
+
+
+def limit15Words(file):
     testDataFile = open(file)
+    line = ""
     allStatements = []
     wordCounter = 0
-    line = ""
-
-    # Take out 15-word lines from the test file
+    # Grab 15-word sentence from the testData file
     for line in testDataFile:
         words = line.split()
         for word in words:
@@ -253,38 +262,35 @@ def adaPredict(hypothesis, file):
                 allStatements.append(line)
                 line = ""
                 wordCounter = 0
+    return line, allStatements
+
+
+def adaPredict(hypothesis, file):
+    """
+    Making the prediction using the saved adaboost model
+    :param hypothesis:File containing the adaboost model
+    :param file:Test file to be tested
+    :return:None
+    """
+    # Loading model from the file
+    loadModel = pickle.load(open(hypothesis, 'rb'))
+
+    line, allStatements = limit15Words(file)
 
     features = appendFeatures(allStatements)
 
-    statementCounter = 0
     hypoWeights = loadModel[1]
     hypoList = loadModel[0]
-
+    statementCounter = 0
     # For every 15-word line make a prediction
     for line in allStatements:
         total = 0
         for index in range(len(loadModel[0])):
-            total = total + adaFinalPredict(hypoList[index], line, features,
+            total = total + adaStumpPredict(hypoList[index], line, features,
                                             statementCounter) * hypoWeights[index]
 
-        if total > 0: print('en')
-        else: print('nl')
+        if total > 0:
+            print('en')
+        else:
+            print('nl')
         statementCounter = statementCounter + 1
-
-
-def adaFinalPredict(stump, sentence, features, index):
-    """
-    Returns prediction based on the input hypothesis(stump) in consideration
-    :param stump:Input hypothesis
-    :param sentence:Input sentence
-    :param features:Total attributes/features we have decided on
-    :param index:Index of the input test statement in the test statement list
-    :return:
-    """
-    featureValue = stump.value
-    if features[featureValue][index] is True:
-        if stump.left.value == 'en': return 1
-        else: return -1
-    else:
-        if stump.right.value == 'en': return 1
-        else: return -1

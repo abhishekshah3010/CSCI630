@@ -31,18 +31,11 @@ def appendFeatures(allSentences):
     return features
 
 
-def dtPredict(hypothesis, file):
-    """
-    Predicts for the decision tree
-    """
-
-    # Load already saved(while training) decision tree model
-    loadModel = pickle.load(open(hypothesis, 'rb'))
+def limit15Words(file):
     testDataFile = open(file)
-    allStatements = []
     line = ""
+    allStatements = []
     wordCounter = 0
-
     # Grab 15-word sentence from the testData file
     for line in testDataFile:
         words = line.split()
@@ -55,6 +48,18 @@ def dtPredict(hypothesis, file):
                 allStatements.append(line)
                 line = ""
                 wordCounter = 0
+    return line, allStatements
+
+
+def dtPredict(hypothesis, file):
+    """
+    Predicts for the decision tree
+    """
+
+    # Load already saved(while training) decision tree model
+    loadModel = pickle.load(open(hypothesis, 'rb'))
+
+    _, allStatements = limit15Words(file)
 
     features = appendFeatures(allStatements)
 
